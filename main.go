@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/salaxander/cloudy-k8s/cmd"
+import "github.com/salaxander/pilot/cmd"
 
 func main() {
   cmd.Execute()
