@@ -1,0 +1,4 @@
+{
+    "cloudProvider": "Azure",
+    "workerNodes": 2
+}

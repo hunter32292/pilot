@@ -16,7 +16,9 @@ limitations under the License.
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/spf13/cobra"
 )
@@ -25,9 +27,12 @@ import (
 var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "Create a managed Kubernetes cluster",
-	Long: `Create a managed Kubernetes cluster according to the config provided`,
+	Long:  `Create a managed Kubernetes cluster according to the config provided`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("create called")
+		configPath, _ := cmd.Flags().GetString("config")
+		config := parseConfig(configPath)
+		fmt.Printf("Config is: %+v", config)
 	},
 }
 
@@ -43,4 +48,24 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	createCmd.Flags().StringP("config", "c", "config.json", "path to the cluster config.json file")
+}
+
+func parseConfig(configPath string) Config {
+	configData, err := ioutil.ReadFile(configPath)
+	if err != nil {
+		fmt.Println("error!")
+	}
+	var config Config
+	err = json.Unmarshal(configData, &config)
+	if err != nil {
+		fmt.Println("error!")
+	}
+	return config
+}
+
+// Config represent the data in a cluster configuration file
+type Config struct {
+	CloudProvider string `json:"cloudProvider"`
+	WorkerNodes   int    `json:"workerNodes"`
 }
