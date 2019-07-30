@@ -2,42 +2,52 @@ package azure
 
 import (
 	"context"
+	"log"
 	"os"
 
 	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-06-01/containerservice"
-	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
 )
 
 var (
-	authorizer, _ = auth.NewAuthorizerFromEnvironment()
-	ctx = context.Background()
+	ctx               = context.Background()
+	subscriptionID    = os.Getenv("AZURE_SUBSCRIPTION_ID")
+	clientID          = os.Getenv("AZURE_CLIENT_ID")
+	clientSecret      = os.Getenv("AZURE_CLIENT_SECRET")
+	authorizer, _     = auth.NewAuthorizerFromEnvironment()
+	osDiskSize        = int32(0)
 )
 
-func CreateCluster() {
-	subscriptionId := os.Getenv("AZURE_SUBSCRIPTION_ID")
-	location := "westus2"
+// CreateCluster creates a managed cluster
+func CreateCluster(name string, location string, vmSize string, agentCount int, kubernetesVersion string, dnsPrefix string, agentPoolName string) {
+	log.Print("Creating Azure cluster")
 
-	groupsClient := resources.NewGroupsClient(subscriptionId)
-	groupsClient.Authorizer = authorizer
-	groupsClient.CreateOrUpdate(
-		ctx,
-		"aks-rg",
-		resources.Group{
-			Location: &location,
-		},
-	)
+	agentCount32 := int32(agentCount)
+	var agentPoolProfile = containerservice.ManagedClusterAgentPoolProfile{
+		Name:         &agentPoolName,
+		Count:        &agentCount32,
+		VMSize:       containerservice.VMSizeTypesStandardB2s,
+		OsDiskSizeGB: &osDiskSize,
+	}
+	agentProfileSlice := []containerservice.ManagedClusterAgentPoolProfile{agentPoolProfile}
 
-	containerServiceClient := containerservice.NewContainerServicesClient(subscriptionId)
+	containerServiceClient := containerservice.NewManagedClustersClient(subscriptionID)
 	containerServiceClient.Authorizer = authorizer
-	containerServiceClient.CreateOrUpdate(
-		ctx, 
-		"aks-rg", 
-		"aks-pilot",
-		containerservice.ContainerService{
-			Properties: &containerservice.Properties{
 
+	cluster, err := containerServiceClient.CreateOrUpdate(ctx, "pilot", name, containerservice.ManagedCluster{
+		Location: &location,
+		ManagedClusterProperties: &containerservice.ManagedClusterProperties{
+			KubernetesVersion: &kubernetesVersion,
+			DNSPrefix:         &dnsPrefix,
+			AgentPoolProfiles: &agentProfileSlice,
+			ServicePrincipalProfile: &containerservice.ManagedClusterServicePrincipalProfile{
+				ClientID: &clientID,
+				Secret:   &clientSecret,
 			},
-		}, 
-	)
+		},
+	})
+	if err != nil {
+		log.Fatalf("Error creating Azure cluster: %v", err)
+	}
+	log.Printf("Created Azure cluster: %v", cluster)
 }

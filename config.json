@@ -1,4 +1,8 @@
 {
-    "cloudProvider": "Azure",
-    "workerNodes": 2
+    "clusterName": "pilot-cluster",
+    "cloudProvider": "azure",
+    "agentCount": 2,
+    "workerVmSize": "Standard_B2s",
+    "kubernetesVersion": "1.13.5",
+    "location": "westus2"
 }
