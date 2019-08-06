@@ -1,6 +1,7 @@
 {
     "clusterName": "pilot-cluster",
     "cloudProvider": "azure",
+    "resourceGroup": "pilot",
     "agentCount": 2,
     "workerVmSize": "Standard_B2s",
     "kubernetesVersion": "1.13.5",

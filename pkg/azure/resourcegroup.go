@@ -6,13 +6,18 @@ import (
 	"github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2019-05-01/resources"
 )
 
-// CreateResourceGroup creates an Azure resource group
-func CreateResourceGroup(location string) {
-	groupsClient := resources.NewGroupsClient(subscriptionID)
+var groupsClient resources.GroupsClient
+
+func init() {
+	groupsClient = resources.NewGroupsClient(subscriptionID)
 	groupsClient.Authorizer = authorizer
+}
+
+// CreateResourceGroup creates an Azure resource group
+func CreateResourceGroup(location, name string) {
 	group, err := groupsClient.CreateOrUpdate(
 		ctx,
-		"aks-rg",
+		name,
 		resources.Group{
 			Location: &location,
 		},

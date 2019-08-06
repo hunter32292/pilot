@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/services/containerservice/mgmt/2019-06-01/containerservice"
 	"github.com/Azure/go-autorest/autorest/azure/auth"
+	"github.com/spf13/viper"
 )
 
 var (
@@ -20,7 +21,17 @@ var (
 
 // CreateCluster creates a managed cluster
 func CreateCluster(name string, location string, vmSize string, agentCount int, kubernetesVersion string, dnsPrefix string, agentPoolName string) {
+	resourceGroup := viper.GetString("resourceGroup")
 	log.Print("Creating Azure cluster")
+
+	log.Printf("Checking to see if resource group '%v' exists", viper.GetString("resourceGroup"))
+	groupCheck, err :=  groupsClient.CheckExistence(ctx, resourceGroup)
+	if err != nil {
+		log.Fatalf("Unable to check existence of Azure resource group")
+	}
+	if groupCheck.StatusCode != 200 {
+		CreateResourceGroup(location, resourceGroup)
+	}
 
 	agentCount32 := int32(agentCount)
 	var agentPoolProfile = containerservice.ManagedClusterAgentPoolProfile{
@@ -34,7 +45,7 @@ func CreateCluster(name string, location string, vmSize string, agentCount int, 
 	containerServiceClient := containerservice.NewManagedClustersClient(subscriptionID)
 	containerServiceClient.Authorizer = authorizer
 
-	cluster, err := containerServiceClient.CreateOrUpdate(ctx, "pilot", name, containerservice.ManagedCluster{
+	cluster, err := containerServiceClient.CreateOrUpdate(ctx, resourceGroup, name, containerservice.ManagedCluster{
 		Location: &location,
 		ManagedClusterProperties: &containerservice.ManagedClusterProperties{
 			KubernetesVersion: &kubernetesVersion,
