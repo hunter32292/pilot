@@ -18,7 +18,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/salaxander/pilot/pkg/azure"
+	"github.com/hunter32292/pilot/pkg/azure"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
